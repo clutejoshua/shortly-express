@@ -17,17 +17,17 @@ app.use(express.static(path.join(__dirname, '../public')));
 
 
 
-app.get('/', 
+app.get('/',
 (req, res) => {
   res.render('index');
 });
 
-app.get('/create', 
+app.get('/create',
 (req, res) => {
   res.render('index');
 });
 
-app.get('/links', 
+app.get('/links',
 (req, res, next) => {
   models.Links.getAll()
     .then(links => {
@@ -38,7 +38,7 @@ app.get('/links',
     });
 });
 
-app.post('/links', 
+app.post('/links',
 (req, res, next) => {
   var url = req.body.url;
   if (!models.Links.isValidUrl(url)) {
@@ -77,8 +77,50 @@ app.post('/links',
 /************************************************************/
 // Write your authentication routes here
 /************************************************************/
+app.get('/signup', (req, res) => {
+  res.render('signup');
+});
+
+app.post('/signup', (req, res, next) => {
+//submits a username and password id
+  let username = req.body.username;
+  let password = req.body.password;
+  models.Users.get({username})
+  .then(data => {
+     //user has account
+    if(data) {
+      //alert('Error: user already in system');
+      //redirect user to signup to reattempt
+      res.redirect('/signup');
+    } else {
+      //new user, create a login for them
+      models.Users.create({username, password})
+      res.status('200').redirect('/');
+
+    }
+  })
+
+});
+
+app.get('/login', (req, res) => {
+  res.render('login');
+});
+
+app.post('/login', (req, res, next) => {
+//submits a username and password id
+  let attemptedUsername = req.body.username;
+  let attemptedPassword = req.body.password;
+  models.Users.get({ username: attemptedUsername })
+  .then(data => {
+    if (models.Users.compare(attemptedPassword, data.password, data.salt)) {
+      res.status(200).redirect('/');
+    } else {
+      res.status(400).redirect('/login');
+    }
+  })
 
 
+});
 
 /************************************************************/
 // Handle the code parameter route last - if all other routes fail
